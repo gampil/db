@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overtime Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-[#f3f4f6] min-h-screen text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <aside class="lg:col-span-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 id="formTitle" class="text-lg font-bold mb-5">Tambah Lembur</h2>
+                <form id="overtimeForm" class="space-y-4 text-sm">
+                    <input type="hidden" id="rowId">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-500 uppercase text-[10px]">Tanggal</label>
+                        <input type="date" id="tanggal" required class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-500 uppercase text-[10px]">Nama Proyek</label>
+                        <input type="text" id="proyek" placeholder="Input proyek..." required class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-500 uppercase text-[10px]">Jam Masuk</label>
+                            <input type="time" id="mulai" required class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-500 uppercase text-[10px]">Jam Keluar</label>
+                            <input type="time" id="selesai" required class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-500 uppercase text-[10px]">Keterangan</label>
+                        <textarea id="keterangan" rows="2" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 transition active:scale-95">Simpan</button>
+                    <button type="button" id="btnCancel" onclick="resetForm()" class="hidden w-full bg-slate-100 text-slate-600 font-bold py-2.5 rounded-lg mt-2">Batal Edit</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="lg:col-span-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="font-bold">Daftar Aktivitas</h2>
+                    <button onclick="loadData()" class="text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px]">
+                            <tr>
+                                <th class="px-5 py-3">Tanggal</th>
+                                <th class="px-5 py-3">Proyek</th>
+                                <th class="px-5 py-3 text-center">Masuk</th>
+                                <th class="px-5 py-3 text-center">Keluar</th>
+                                <th class="px-5 py-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listLembur" class="divide-y divide-slate-100">
+                            <tr><td colspan="5" class="p-10 text-center text-slate-400">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwOKCQ2_4RudLmKvTrxQYxo80JvrQXsIFzcB5O9FciHQCKoF6WJP_4yVtcXhhnJ-KRv/exec';
+        let allData = [];
+
+        async function loadData() {
+            const list = document.getElementById('listLembur');
+            list.innerHTML = '<tr><td colspan="5" class="p-10 text-center animate-pulse">Sinkronisasi...</td></tr>';
+            try {
+                const res = await fetch(scriptURL);
+                allData = await res.json();
+                list.innerHTML = allData.reverse().map(item => `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-5 py-4 font-medium">${new Date(item.tanggal).toLocaleDateString('id-ID')}</td>
+                        <td class="px-5 py-4"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">${item.proyek}</span></td>
+                        <td class="px-5 py-4 text-center font-mono">${item.mulai}</td>
+                        <td class="px-5 py-4 text-center font-mono">${item.selesai}</td>
+                        <td class="px-5 py-4 flex gap-2">
+                            <button onclick="editData(${item.rowId})" class="p-1.5 text-blue-500 hover:bg-blue-100 rounded transition" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button onclick="deleteData(${item.rowId})" class="p-1.5 text-red-500 hover:bg-red-100 rounded transition" title="Hapus">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { list.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-400">Gagal load data.</td></tr>'; }
+        }
+
+        async function deleteData(rowId) {
+            if(!confirm('Hapus data ini?')) return;
+            await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: 'DELETE', rowId })});
+            loadData();
+        }
+
+        function editData(rowId) {
+            const item = allData.find(d => d.rowId === rowId);
+            document.getElementById('rowId').value = item.rowId;
+            document.getElementById('tanggal').value = new Date(item.tanggal).toISOString().split('T')[0];
+            document.getElementById('proyek').value = item.proyek;
+            document.getElementById('mulai').value = item.mulai;
+            document.getElementById('selesai').value = item.selesai;
+            document.getElementById('keterangan').value = item.keterangan;
+            
+            document.getElementById('formTitle').innerText = 'Edit Lembur';
+            document.getElementById('btnSubmit').innerText = 'Update Data';
+            document.getElementById('btnCancel').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('overtimeForm').reset();
+            document.getElementById('rowId').value = '';
+            document.getElementById('formTitle').innerText = 'Tambah Lembur';
+            document.getElementById('btnSubmit').innerText = 'Simpan';
+            document.getElementById('btnCancel').classList.add('hidden');
+        }
+
+        document.getElementById('overtimeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            const rowId = document.getElementById('rowId').value;
+            btn.disabled = true;
+
+            const payload = {
+                action: rowId ? 'EDIT' : 'ADD',
+                rowId: rowId,
+                tanggal: document.getElementById('tanggal').value,
+                proyek: document.getElementById('proyek').value,
+                mulai: document.getElementById('mulai').value,
+                selesai: document.getElementById('selesai').value,
+                keterangan: document.getElementById('keterangan').value
+            };
+
+            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
+            resetForm();
+            loadData();
+            btn.disabled = false;
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
